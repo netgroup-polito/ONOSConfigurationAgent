@@ -31,6 +31,7 @@ import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.OutboundEvent;
 import org.glassfish.jersey.media.sse.SseFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import com.mycompany.ddclientfrogsssa.testDD;
 
 
 /**
@@ -43,14 +44,14 @@ public class ConnectionModule extends AbstractFacade<Resources> {
 
     @PersistenceContext(unitName = "com.mycompany_frogsssa_war_1.0-SNAPSHOTPU")
     private EntityManager em;
-    private static ArrayList<Resources> res;
+    private static ArrayList<Resources> res = new ArrayList<Resources>();
     private static HashMap<Long, EventOutput> SSEClients = new HashMap<>();
+    private static HashMap<Long, testDD> DDClients = new HashMap<>();
 //    static private HashMap<Long, ServerEndpoint> SEClients = new HashMap<>();
-    private sseResource conn = new sseResource();
+    private static sseResource conn = new sseResource();
     
     public ConnectionModule() {
         super(Resources.class);
-        res = new ArrayList<Resources>();
 //        final ResourceConfig config = new ResourceConfig();
 //        config.register(SseFeature.class);
     }
@@ -211,14 +212,28 @@ public class ConnectionModule extends AbstractFacade<Resources> {
     @Produces(MediaType.APPLICATION_JSON)
     public String create() {
         Resources entity = new Resources();
-        entity.setId((new Random()).nextLong());
+        Long id = (new Random()).nextLong();
+        entity.setId(id);
         //create(entity);
         res.add(entity);
         //SSE
+        //DDClient
+        if(!DDClients.containsKey(id)){
+            testDD c = new testDD("tcp://127.0.0.1:5555", "/home/lara/GIT/DoubleDecker/keys/a-keys.json", id.toString(), "connMod");
+            DDClients.put(id, c);
+        }
         return entity.getId().toString();
     }
     
-    
+    @POST
+    @Path("{id}/change")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public void somethingChanged(@PathParam("id") Long id, String m){
+        if(DDClients.containsKey(id)){
+            testDD c = DDClients.get(id);
+            c.publish(id.toString(), m);
+        }
+    }
     
     @Override
     public void create(Resources entity){
