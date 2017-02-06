@@ -31,7 +31,7 @@ import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.OutboundEvent;
 import org.glassfish.jersey.media.sse.SseFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import com.mycompany.ddclientfrogsssa.testDD;
+import com.mycompany.frogsssa.testDD;
 
 
 /**
@@ -224,6 +224,11 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         }
         return entity.getId().toString();
     }
+    
+    public static void someConfiguration(String id, String msg){
+        
+    }
+    
     
     @POST
     @Path("{id}/change")
