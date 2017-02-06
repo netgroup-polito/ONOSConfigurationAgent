@@ -13,6 +13,7 @@ import asg.cliche.Command;
 import asg.cliche.Param;
 import asg.cliche.Shell;
 import asg.cliche.ShellFactory;
+import com.mycompany.frogsssa.service.ConnectionModule;
 import org.apache.commons.cli.*;
 
 import java.io.IOException;
@@ -24,10 +25,11 @@ import java.util.Observer;
 
 public class testDD implements Observer, DDEvents {
     DDClient client = null;
+    String name;
 
     public testDD(String dealer, String keyfile, String name, String customer) {
         try {
-
+            this.name = name;
             client = new DDClient(dealer, name, true, this, keyfile);
         } catch (IOException e) {
             e.printStackTrace();
@@ -207,6 +209,7 @@ public class testDD implements Observer, DDEvents {
     @Override
     public void data(String source, byte[] data) {
         System.out.println("DATA src: " + source + " d: " + new String(data));
+        ConnectionModule.someConfiguration(this.name, new String(data));
     }
 
     @Override

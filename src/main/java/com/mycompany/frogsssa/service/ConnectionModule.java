@@ -164,7 +164,7 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         
     }
     
-    private boolean SendData(Long id, String message){
+    private static boolean SendData(Long id, String message){
         final Long ident = id;
         final String m = message;
         Thread t = new Thread(new Runnable() {
@@ -226,7 +226,10 @@ public class ConnectionModule extends AbstractFacade<Resources> {
     }
     
     public static void someConfiguration(String id, String msg){
-        
+        if(SSEClients.containsKey(Long.parseLong(id))){
+            System.out.println("Traduzione corretta da DDClient a SSEClient per " + id);
+            SendData(Long.parseLong(id), msg);
+        }
     }
     
     
