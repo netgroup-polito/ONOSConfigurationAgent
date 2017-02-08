@@ -52,6 +52,7 @@ public class serviceLayerService {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public void setConf(@PathParam("AppId") Long id, @PathParam("varId") String var, String Json){
-        
+        //controllo validità variabile
+        ConnectionModule.someConfiguration(id.toString(), "config " + var + " " + Json);
     }
 }
