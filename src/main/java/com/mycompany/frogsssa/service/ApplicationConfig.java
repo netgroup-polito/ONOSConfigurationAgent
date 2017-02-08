@@ -31,6 +31,7 @@ public class ApplicationConfig extends Application {
     private void addRestResourceClasses(Set<Class<?>> resources) {
         resources.add(com.mycompany.frogsssa.service.ConnectionModule.class);
         resources.add(com.mycompany.frogsssa.service.ConnectionModule.sseResource.class);
+        resources.add(com.mycompany.frogsssa.service.serviceLayerService.class);
     }
     
 }

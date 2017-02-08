@@ -88,7 +88,7 @@ public class Resources implements Serializable {
         return "com.mycompany.frogsssa.Resources[ id=" + id + " ]";
     }
     
-    public boolean setCorrespondance(String x, String c){
+    public boolean setCorrespondence(String x, String c){
         if(correspondence.containsKey(x))
             return false;
         correspondence.put(x, c);
@@ -102,5 +102,17 @@ public class Resources implements Serializable {
             values.remove(x);
         values.put(x, o);
         return true;
+    }
+    
+    public String getCorrespondence(String id){
+        if(correspondence.containsKey(id))
+            return correspondence.get(id);
+        return null;
+    }
+    
+    public Object getValue(String id){
+        if(values.containsKey(id))
+            return values.get(id);
+        return null;
     }
 }

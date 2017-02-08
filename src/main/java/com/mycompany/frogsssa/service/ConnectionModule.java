@@ -5,6 +5,7 @@
  */
 package com.mycompany.frogsssa.service;
 
+import com.google.gson.Gson;
 import com.mycompany.frogsssa.Resources;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import org.glassfish.jersey.media.sse.OutboundEvent;
 import org.glassfish.jersey.media.sse.SseFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import com.mycompany.frogsssa.testDD;
+import java.util.Arrays;
 
 
 /**
@@ -44,10 +46,9 @@ public class ConnectionModule extends AbstractFacade<Resources> {
 
     @PersistenceContext(unitName = "com.mycompany_frogsssa_war_1.0-SNAPSHOTPU")
     private EntityManager em;
-    private static ArrayList<Resources> res = new ArrayList<Resources>();
+    private static HashMap<Long, Resources> res = new HashMap<Long, Resources>();
     private static HashMap<Long, EventOutput> SSEClients = new HashMap<>();
     private static HashMap<Long, testDD> DDClients = new HashMap<>();
-//    static private HashMap<Long, ServerEndpoint> SEClients = new HashMap<>();
     private static sseResource conn = new sseResource();
     
     public ConnectionModule() {
@@ -76,9 +77,8 @@ public class ConnectionModule extends AbstractFacade<Resources> {
 //    }
     
     private Resources findR(Long id){
-        for(int i = 0; i < res.size(); i++)
-            if(id.longValue()==res.get(i).getId().longValue())
-                return res.get(i);
+        if(res.containsKey(id))
+            return res.get(id);
         return null;
     }
     
@@ -214,8 +214,8 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         Resources entity = new Resources();
         Long id = (new Random()).nextLong();
         entity.setId(id);
-        //create(entity);
-        res.add(entity);
+        //create resources entrance
+        res.put(id, entity);
         //SSE
         //DDClient
         if(!DDClients.containsKey(id)){
@@ -259,16 +259,16 @@ public class ConnectionModule extends AbstractFacade<Resources> {
     @Path("{id}/{x}/DM")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.TEXT_PLAIN)
-    public String Correspondance(@PathParam("id") final Long id, @PathParam("x") String x, String c){
+    public String Correspondence(@PathParam("id") final Long id, @PathParam("x") final String x, String c){
        Resources r = findR(id);
        if(r==null)
            Boolean.toString(false);
-       boolean result = r.setCorrespondance(x,c);
+       boolean result = r.setCorrespondence(x,c);
        //sseResource.sendMessage(id, "Modified DM of " + id);
        new Thread(new Runnable() {
            @Override
            public void run() {
-               sseResource.sendMessage(id, "prova");
+               SendData(id, "corrispondenza per " + x + " settata");
            }
        }).start();
        return Boolean.toString(result);
@@ -293,6 +293,8 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         Resources r = findR(id);
         if(r!=null)
             res.remove(r);
+        SSEClients.remove(id);
+        DDClients.remove(id);
     }
 
     @GET
@@ -312,7 +314,7 @@ public class ConnectionModule extends AbstractFacade<Resources> {
     @Override
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     public List<Resources> findAll() {
-        return res;
+        return new ArrayList(res.values());
     }
 
     @GET
@@ -334,4 +336,20 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         return em;
     }
     
+    
+    //methods to be accessed by serviceLayerService
+    public Resources getRes(Long id){
+        if(res.containsKey(id))
+            return res.get(id);
+        else return null;
+    }
+    
+    public static Object getResVariable(Long id, String var){
+        if(res.containsKey(id)){
+            Resources r = res.get(id);
+            return r.getValue(var);
+        }
+        return null;
+    }
 }
+
