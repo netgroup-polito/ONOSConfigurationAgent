@@ -221,6 +221,8 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         if(!DDClients.containsKey(id)){
             testDD c = new testDD("tcp://127.0.0.1:5555", "/home/lara/GIT/DoubleDecker/keys/a-keys.json", id.toString(), "connMod");
             DDClients.put(id, c);
+            //public the id in the "all topic"
+            c.publish("all", id.toString());
         }
         return entity.getId().toString();
     }

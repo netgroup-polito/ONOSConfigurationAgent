@@ -35,24 +35,25 @@ public class serviceLayerService {
     }
 
     //get the resources
-    @Path("{varId}")
+    @Path("{varId : .+}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public String getResources(@PathParam("AppId") Long id, @PathParam("varId") String var){
-        String res = new String("can't find anything");
-        Object obj = ConnectionModule.getResVariable(id, var);
-        if(obj!=null){
-            return (new Gson()).toJson(obj);
-        }
+        String res = new String("asked for this variable " + var);
+        //Object obj = ConnectionModule.getResVariable(id, var);
+        //if(obj!=null){
+          //  return (new Gson()).toJson(obj);
+        //}
         return res;
     }
     
     //configuration
-    @Path("{varId}")
+    @Path("{varId: .+}")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public void setConf(@PathParam("AppId") Long id, @PathParam("varId") String var, String Json){
         //controllo validità variabile
-        ConnectionModule.someConfiguration(id.toString(), "config " + var + " " + Json);
+        //ConnectionModule.someConfiguration(id.toString(), "config " + var + " " + Json);
+        System.out.println("It wants to set the variable " + var);
     }
 }
