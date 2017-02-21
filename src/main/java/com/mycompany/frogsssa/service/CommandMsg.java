@@ -11,8 +11,8 @@ package com.mycompany.frogsssa.service;
  */
 class CommandMsg {
     Long id;
-    action act;
+    command act;
     String var;
     Object obj;
-    public enum action{GET, CONFIG};
+    public enum command{GET, CONFIG};
 }

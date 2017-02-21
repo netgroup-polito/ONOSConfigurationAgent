@@ -7,7 +7,7 @@ package com.mycompany.frogsssa.service;
 
 import com.google.gson.Gson;
 import com.mycompany.frogsssa.Resources;
-import com.mycompany.frogsssa.service.CommandMsg.action;
+import com.mycompany.frogsssa.service.CommandMsg.command;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -89,7 +89,7 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         if(!SSEClients.containsKey(AppId))
             return null;
         CommandMsg msg = new CommandMsg();
-        msg.act = action.GET;
+        msg.act = command.GET;
         msg.var = var;
         Long v = (new Random()).nextLong();
         msg.id = v;
