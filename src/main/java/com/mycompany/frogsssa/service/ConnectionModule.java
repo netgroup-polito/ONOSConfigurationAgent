@@ -7,6 +7,7 @@ package com.mycompany.frogsssa.service;
 
 import com.google.gson.Gson;
 import com.mycompany.frogsssa.Resources;
+import com.mycompany.frogsssa.service.CommandMsg.action;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,6 +51,8 @@ public class ConnectionModule extends AbstractFacade<Resources> {
     private static HashMap<Long, EventOutput> SSEClients = new HashMap<>();
     private static HashMap<Long, testDD> DDClients = new HashMap<>();
     private static sseResource conn = new sseResource();
+    private static HashMap<Long, Object> resToServiceLayers = new HashMap();
+
     
     public ConnectionModule() {
         super(Resources.class);
@@ -80,6 +83,27 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         if(res.containsKey(id))
             return res.get(id);
         return null;
+    }
+    
+    public Object getValue(Long AppId, String var){
+        if(!SSEClients.containsKey(AppId))
+            return null;
+        CommandMsg msg = new CommandMsg();
+        msg.act = action.GET;
+        msg.var = var;
+        Long v = (new Random()).nextLong();
+        msg.id = v;
+        SendData(AppId, (new Gson()).toJson(msg));
+        synchronized(resToServiceLayers){
+        while(!resToServiceLayers.containsKey(v))
+            try{resToServiceLayers.wait();} catch (InterruptedException ex) {
+                Logger.getLogger(ConnectionModule.class.getName()).log(Level.SEVERE, null, ex);
+                return null;
+            }
+        }
+        Object ret = resToServiceLayers.get(v);
+        resToServiceLayers.remove(v);
+        return ret;
     }
     
     @Path("events/{id}")
@@ -162,6 +186,16 @@ public class ConnectionModule extends AbstractFacade<Resources> {
                 }
             }
         
+    }
+    
+    @Path("{id}/response")
+    @POST
+    @Consumes(MediaType.TEXT_PLAIN)
+    public void getResponse(@PathParam("id") Long id, String msgJson){
+        CommandMsg msg = (new Gson()).fromJson(msgJson, CommandMsg.class);
+        synchronized(resToServiceLayers){
+        resToServiceLayers.put(msg.id, msg.obj);
+        resToServiceLayers.notifyAll();}
     }
     
     private static boolean SendData(Long id, String message){

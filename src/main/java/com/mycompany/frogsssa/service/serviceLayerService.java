@@ -44,7 +44,8 @@ public class serviceLayerService {
         //if(obj!=null){
           //  return (new Gson()).toJson(obj);
         //}
-        return res;
+        Object obj = ((new ConnectionModule()).getValue(id, var));
+        return ((new Gson()).toJson(obj));
     }
     
     //configuration
