@@ -42,7 +42,7 @@ public class serviceLayerService {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getResources(@PathParam("AppId") Long id, @PathParam("varId") String var){
-        String res = new String("asked for this variable " + var);
+        //String res = new String("asked for this variable " + var);
         //Object obj = ConnectionModule.getResVariable(id, var);
         //if(obj!=null){
           //  return (new Gson()).toJson(obj);
