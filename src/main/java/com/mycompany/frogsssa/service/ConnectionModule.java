@@ -35,6 +35,7 @@ import org.glassfish.jersey.media.sse.SseFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import com.mycompany.frogsssa.testDD;
 import java.util.Arrays;
+import org.codehaus.jackson.JsonNode;
 
 
 /**
@@ -51,7 +52,7 @@ public class ConnectionModule extends AbstractFacade<Resources> {
     private static HashMap<Long, EventOutput> SSEClients = new HashMap<>();
     private static HashMap<Long, testDD> DDClients = new HashMap<>();
     private static sseResource conn = new sseResource();
-    private static HashMap<Long, Object> resToServiceLayers = new HashMap();
+    private static HashMap<Long, JsonNode> resToServiceLayers = new HashMap();
 
     
     public ConnectionModule() {
@@ -85,7 +86,7 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         return null;
     }
     
-    public Object getValue(Long AppId, String var){
+    public JsonNode getValue(Long AppId, String var){
         if(!SSEClients.containsKey(AppId))
             return null;
         CommandMsg msg = new CommandMsg();
@@ -101,9 +102,28 @@ public class ConnectionModule extends AbstractFacade<Resources> {
                 return null;
             }
         }
-        Object ret = resToServiceLayers.get(v);
+        JsonNode ret = resToServiceLayers.get(v);
         resToServiceLayers.remove(v);
         return ret;
+    }
+    
+    public static void configVar(Long id, String var, String json){
+        if(SSEClients.containsKey(id)){
+            CommandMsg msg = new CommandMsg();
+            msg.act=command.CONFIG;
+            msg.var=var;
+            msg.obj=json;
+            SendData(id, (new Gson()).toJson(msg));
+        }
+    }
+    
+    public static void deleteVar(Long id, String var){
+        if(SSEClients.containsKey(id)){
+            CommandMsg msg = new CommandMsg();
+            msg.act = command.DELETE;
+            msg.var = var;
+            SendData(id, (new Gson()).toJson(msg));
+        }
     }
     
     @Path("events/{id}")
@@ -194,7 +214,7 @@ public class ConnectionModule extends AbstractFacade<Resources> {
     public void getResponse(@PathParam("id") Long id, String msgJson){
         CommandMsg msg = (new Gson()).fromJson(msgJson, CommandMsg.class);
         synchronized(resToServiceLayers){
-        resToServiceLayers.put(msg.id, msg.obj);
+        resToServiceLayers.put(msg.id, msg.objret);
         resToServiceLayers.notifyAll();}
     }
     

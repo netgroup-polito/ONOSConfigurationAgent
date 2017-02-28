@@ -5,6 +5,8 @@
  */
 package com.mycompany.frogsssa.service;
 
+import org.codehaus.jackson.JsonNode;
+
 /**
  *
  * @author lara
@@ -13,6 +15,7 @@ class CommandMsg {
     Long id;
     command act;
     String var;
+    JsonNode objret;
     Object obj;
-    public enum command{GET, CONFIG};
+    public enum command{GET, CONFIG, DELETE};
 }
