@@ -5,7 +5,9 @@
  */
 package com.mycompany.frogsssa.service;
 
+import com.google.gson.Gson;
 import com.mycompany.frogsssa.Resources;
+import com.mycompany.frogsssa.service.CommandMsg.command;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,6 +33,9 @@ import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.OutboundEvent;
 import org.glassfish.jersey.media.sse.SseFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import com.mycompany.frogsssa.testDD;
+import java.util.Arrays;
+import org.codehaus.jackson.JsonNode;
 
 
 /**
@@ -43,14 +48,15 @@ public class ConnectionModule extends AbstractFacade<Resources> {
 
     @PersistenceContext(unitName = "com.mycompany_frogsssa_war_1.0-SNAPSHOTPU")
     private EntityManager em;
-    private static ArrayList<Resources> res;
+    private static HashMap<Long, Resources> res = new HashMap<Long, Resources>();
     private static HashMap<Long, EventOutput> SSEClients = new HashMap<>();
-//    static private HashMap<Long, ServerEndpoint> SEClients = new HashMap<>();
-    private sseResource conn = new sseResource();
+    private static HashMap<Long, testDD> DDClients = new HashMap<>();
+    private static sseResource conn = new sseResource();
+    private static HashMap<Long, JsonNode> resToServiceLayers = new HashMap();
+
     
     public ConnectionModule() {
         super(Resources.class);
-        res = new ArrayList<Resources>();
 //        final ResourceConfig config = new ResourceConfig();
 //        config.register(SseFeature.class);
     }
@@ -75,10 +81,49 @@ public class ConnectionModule extends AbstractFacade<Resources> {
 //    }
     
     private Resources findR(Long id){
-        for(int i = 0; i < res.size(); i++)
-            if(id.longValue()==res.get(i).getId().longValue())
-                return res.get(i);
+        if(res.containsKey(id))
+            return res.get(id);
         return null;
+    }
+    
+    public JsonNode getValue(Long AppId, String var){
+        if(!SSEClients.containsKey(AppId))
+            return null;
+        CommandMsg msg = new CommandMsg();
+        msg.act = command.GET;
+        msg.var = var;
+        Long v = (new Random()).nextLong();
+        msg.id = v;
+        SendData(AppId, (new Gson()).toJson(msg));
+        synchronized(resToServiceLayers){
+        while(!resToServiceLayers.containsKey(v))
+            try{resToServiceLayers.wait();} catch (InterruptedException ex) {
+                Logger.getLogger(ConnectionModule.class.getName()).log(Level.SEVERE, null, ex);
+                return null;
+            }
+        }
+        JsonNode ret = resToServiceLayers.get(v);
+        resToServiceLayers.remove(v);
+        return ret;
+    }
+    
+    public static void configVar(Long id, String var, String json){
+        if(SSEClients.containsKey(id)){
+            CommandMsg msg = new CommandMsg();
+            msg.act=command.CONFIG;
+            msg.var=var;
+            msg.obj=json;
+            SendData(id, (new Gson()).toJson(msg));
+        }
+    }
+    
+    public static void deleteVar(Long id, String var){
+        if(SSEClients.containsKey(id)){
+            CommandMsg msg = new CommandMsg();
+            msg.act = command.DELETE;
+            msg.var = var;
+            SendData(id, (new Gson()).toJson(msg));
+        }
     }
     
     @Path("events/{id}")
@@ -163,7 +208,17 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         
     }
     
-    private boolean SendData(Long id, String message){
+    @Path("{id}/response")
+    @POST
+    @Consumes(MediaType.TEXT_PLAIN)
+    public void getResponse(@PathParam("id") Long id, String msgJson){
+        CommandMsg msg = (new Gson()).fromJson(msgJson, CommandMsg.class);
+        synchronized(resToServiceLayers){
+        resToServiceLayers.put(msg.id, msg.objret);
+        resToServiceLayers.notifyAll();}
+    }
+    
+    private static boolean SendData(Long id, String message){
         final Long ident = id;
         final String m = message;
         Thread t = new Thread(new Runnable() {
@@ -211,14 +266,38 @@ public class ConnectionModule extends AbstractFacade<Resources> {
     @Produces(MediaType.APPLICATION_JSON)
     public String create() {
         Resources entity = new Resources();
-        entity.setId((new Random()).nextLong());
-        //create(entity);
-        res.add(entity);
+        Long id = (new Random()).nextLong();
+        entity.setId(id);
+        //create resources entrance
+        res.put(id, entity);
         //SSE
+        //DDClient
+        if(!DDClients.containsKey(id)){
+            testDD c = new testDD("tcp://127.0.0.1:5555", "/home/lara/GIT/DoubleDecker/keys/a-keys.json", id.toString(), "connMod");
+            DDClients.put(id, c);
+            //public the id in the "all topic"
+            c.publish("all", id.toString());
+        }
         return entity.getId().toString();
     }
     
+    public static void someConfiguration(String id, String msg){
+        if(SSEClients.containsKey(Long.parseLong(id))){
+            System.out.println("Traduzione corretta da DDClient a SSEClient per " + id);
+            SendData(Long.parseLong(id), msg);
+        }
+    }
     
+    
+    @POST
+    @Path("{id}/change")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public void somethingChanged(@PathParam("id") Long id, String m){
+        if(DDClients.containsKey(id)){
+            testDD c = DDClients.get(id);
+            c.publish(id.toString(), m);
+        }
+    }
     
     @Override
     public void create(Resources entity){
@@ -236,16 +315,16 @@ public class ConnectionModule extends AbstractFacade<Resources> {
     @Path("{id}/{x}/DM")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.TEXT_PLAIN)
-    public String Correspondance(@PathParam("id") final Long id, @PathParam("x") String x, String c){
+    public String Correspondence(@PathParam("id") final Long id, @PathParam("x") final String x, String c){
        Resources r = findR(id);
        if(r==null)
            Boolean.toString(false);
-       boolean result = r.setCorrespondance(x,c);
+       boolean result = r.setCorrespondence(x,c);
        //sseResource.sendMessage(id, "Modified DM of " + id);
        new Thread(new Runnable() {
            @Override
            public void run() {
-               sseResource.sendMessage(id, "prova");
+               SendData(id, "corrispondenza per " + x + " settata");
            }
        }).start();
        return Boolean.toString(result);
@@ -270,6 +349,8 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         Resources r = findR(id);
         if(r!=null)
             res.remove(r);
+        SSEClients.remove(id);
+        DDClients.remove(id);
     }
 
     @GET
@@ -289,7 +370,7 @@ public class ConnectionModule extends AbstractFacade<Resources> {
     @Override
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     public List<Resources> findAll() {
-        return res;
+        return new ArrayList(res.values());
     }
 
     @GET
@@ -311,4 +392,20 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         return em;
     }
     
+    
+    //methods to be accessed by serviceLayerService
+    public Resources getRes(Long id){
+        if(res.containsKey(id))
+            return res.get(id);
+        else return null;
+    }
+    
+    public static Object getResVariable(Long id, String var){
+        if(res.containsKey(id)){
+            Resources r = res.get(id);
+            return r.getValue(var);
+        }
+        return null;
+    }
 }
+

@@ -1,4 +1,4 @@
-package se.acreo.doubledecker;
+package com.mycompany.frogsssa;
 
 public interface DDEvents {
 
