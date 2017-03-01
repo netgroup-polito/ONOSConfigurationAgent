@@ -5,6 +5,7 @@
  */
 package com.mycompany.frogsssa.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.Gson;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
@@ -16,9 +17,10 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PUT;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.codehaus.jackson.JsonNode;
+import org.glassfish.jersey.server.ResourceConfig;
 
 /**
  * REST Web Service
@@ -49,7 +51,7 @@ public class serviceLayerService {
         //}
         var = var.replace("/", ".");
         JsonNode obj = ((new ConnectionModule()).getValue(id, var));
-        return Response.ok(obj).build();
+        return Response.ok(obj.toString()).build();
     }
     
     //configuration

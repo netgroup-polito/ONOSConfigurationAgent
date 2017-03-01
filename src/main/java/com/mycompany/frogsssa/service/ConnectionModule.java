@@ -5,6 +5,8 @@
  */
 package com.mycompany.frogsssa.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.mycompany.frogsssa.Resources;
 import com.mycompany.frogsssa.service.CommandMsg.command;
@@ -35,7 +37,6 @@ import org.glassfish.jersey.media.sse.SseFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import com.mycompany.frogsssa.testDD;
 import java.util.Arrays;
-import org.codehaus.jackson.JsonNode;
 
 
 /**
@@ -211,10 +212,10 @@ public class ConnectionModule extends AbstractFacade<Resources> {
     @Path("{id}/response")
     @POST
     @Consumes(MediaType.TEXT_PLAIN)
-    public void getResponse(@PathParam("id") Long id, String msgJson){
+    public void getResponse(@PathParam("id") Long id, String msgJson) throws IOException{
         CommandMsg msg = (new Gson()).fromJson(msgJson, CommandMsg.class);
         synchronized(resToServiceLayers){
-        resToServiceLayers.put(msg.id, msg.objret);
+        resToServiceLayers.put(msg.id, (new ObjectMapper()).readTree(msg.objret));
         resToServiceLayers.notifyAll();}
     }
     
@@ -273,10 +274,10 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         //SSE
         //DDClient
         if(!DDClients.containsKey(id)){
-            testDD c = new testDD("tcp://127.0.0.1:5555", "/home/lara/GIT/DoubleDecker/keys/a-keys.json", id.toString(), "connMod");
-            DDClients.put(id, c);
+            //testDD c = new testDD("tcp://127.0.0.1:5555", "/home/lara/GIT/DoubleDecker/keys/a-keys.json", id.toString(), "connMod");
+            //DDClients.put(id, c);
             //public the id in the "all topic"
-            c.publish("all", id.toString());
+            //c.publish("all", id.toString());
         }
         return entity.getId().toString();
     }
