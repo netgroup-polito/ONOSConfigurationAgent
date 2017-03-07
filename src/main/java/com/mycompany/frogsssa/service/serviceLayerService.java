@@ -43,7 +43,7 @@ public class serviceLayerService {
     @Path("{varId : .+}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getResources(@PathParam("AppId") Long id, @PathParam("varId") String var){
+    public Response getResources(@PathParam("AppId") String id, @PathParam("varId") String var){
         //String res = new String("asked for this variable " + var);
         //Object obj = ConnectionModule.getResVariable(id, var);
         //if(obj!=null){
@@ -51,14 +51,23 @@ public class serviceLayerService {
         //}
         var = var.replace("/", ".");
         JsonNode obj = ((new ConnectionModule()).getValue(id, var));
+        if(obj==null)
+            return Response.ok("Object not found").build();
         return Response.ok(obj.toString()).build();
+    }
+    
+    @GET
+    @Path("DM")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getYang(@PathParam("AppId") String id){
+        return ConnectionModule.getYang(id);
     }
     
     //configuration
     @Path("{varId: .+}")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    public void setConf(@PathParam("AppId") Long id, @PathParam("varId") String var, String Json){
+    public void setConf(@PathParam("AppId") String id, @PathParam("varId") String var, String Json){
         //controllo validità variabile
         //ConnectionModule.someConfiguration(id.toString(), "config " + var + " " + Json);
         System.out.println("It wants to set the variable " + var);
@@ -68,7 +77,7 @@ public class serviceLayerService {
     
     @Path("{varId: .+}")
     @DELETE
-    public void deleteVar(@PathParam("AppId") Long id, @PathParam("varId") String var){
+    public void deleteVar(@PathParam("AppId") String id, @PathParam("varId") String var){
         var = var.replace("/", ".");
         ConnectionModule.deleteVar(id, var);
     }

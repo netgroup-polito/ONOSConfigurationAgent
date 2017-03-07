@@ -37,6 +37,7 @@ import org.glassfish.jersey.media.sse.SseFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import com.mycompany.frogsssa.testDD;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 
 /**
@@ -49,12 +50,19 @@ public class ConnectionModule extends AbstractFacade<Resources> {
 
     @PersistenceContext(unitName = "com.mycompany_frogsssa_war_1.0-SNAPSHOTPU")
     private EntityManager em;
-    private static HashMap<Long, Resources> res = new HashMap<Long, Resources>();
-    private static HashMap<Long, EventOutput> SSEClients = new HashMap<>();
-    private static HashMap<Long, testDD> DDClients = new HashMap<>();
+    private static HashMap<String, Resources> res = new HashMap<String, Resources>();
+    private static HashMap<String, EventOutput> SSEClients = new HashMap<>();
+    private static HashMap<String, testDD> DDClients = new HashMap<>();
+    private final static testDD dd = new testDD("tcp://127.0.0.1:5555", "/home/lara/GIT/DoubleDecker/keys/a-keys.json", (new Long((new Random()).nextLong())).toString(), "connMod");
     private static sseResource conn = new sseResource();
     private static HashMap<Long, JsonNode> resToServiceLayers = new HashMap();
 
+    public enum action{ADDED, UPDATED, REMOVED, NOCHANGES};
+    public class events{
+        public action act;
+        public Object obj;
+        public String var;
+    }
     
     public ConnectionModule() {
         super(Resources.class);
@@ -62,18 +70,18 @@ public class ConnectionModule extends AbstractFacade<Resources> {
 //        config.register(SseFeature.class);
     }
     
-    public static void addEndpoint(EventOutput se, Long id){
+    public static void addEndpoint(EventOutput se, String id){
         if(!SSEClients.containsKey(id)){
             SSEClients.put(id, se);
         }
     }
     
-    public static void deleteEndpoint(Long id){
+    public static void deleteEndpoint(String id){
         if(SSEClients.containsKey(id))
             SSEClients.remove(id);
     }
     
-    public static EventOutput getEndpoint(Long id){
+    public static EventOutput getEndpoint(String id){
         return SSEClients.get(id);
     }
 
@@ -81,13 +89,13 @@ public class ConnectionModule extends AbstractFacade<Resources> {
 //        System.out.println("Message received from " + id + " : " + m);
 //    }
     
-    private Resources findR(Long id){
+    private Resources findR(String id){
         if(res.containsKey(id))
             return res.get(id);
         return null;
     }
     
-    public JsonNode getValue(Long AppId, String var){
+    public JsonNode getValue(String AppId, String var){
         if(!SSEClients.containsKey(AppId))
             return null;
         CommandMsg msg = new CommandMsg();
@@ -108,7 +116,7 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         return ret;
     }
     
-    public static void configVar(Long id, String var, String json){
+    public static void configVar(String id, String var, String json){
         if(SSEClients.containsKey(id)){
             CommandMsg msg = new CommandMsg();
             msg.act=command.CONFIG;
@@ -118,7 +126,7 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         }
     }
     
-    public static void deleteVar(Long id, String var){
+    public static void deleteVar(String id, String var){
         if(SSEClients.containsKey(id)){
             CommandMsg msg = new CommandMsg();
             msg.act = command.DELETE;
@@ -131,30 +139,19 @@ public class ConnectionModule extends AbstractFacade<Resources> {
     public static class sseResource{
         final EventOutput evOut = new EventOutput();
         
-        private static Resources findR(Long id){
+        private static Resources findR(String id){
         for(int i = 0; i < res.size(); i++)
-            if(id.longValue()==res.get(i).getId().longValue())
+            if(id==res.get(i).getId())
                 return res.get(i);
         return null;
     }
         
         @GET
         @Produces(SseFeature.SERVER_SENT_EVENTS)
-        public EventOutput getServerSentEvents(@PathParam("id") final Long id){
+        public EventOutput getServerSentEvents(@PathParam("id") final String id){
             new Thread(new Runnable() {
                 public void run() {
-                    try{
-                        for(int i=0;i<10;i++){
-                            final OutboundEvent.Builder builder = new OutboundEvent.Builder();
-                            builder.name("message-to-client");
-                            builder.data(String.class, "Hello world " + i);
-                            final OutboundEvent event = builder.build();
-                            evOut.write(event);
-                        }
-                    } catch (IOException ex) {
-                        Logger.getLogger(ConnectionModule.class.getName()).log(Level.SEVERE, null, ex);
-                        throw new RuntimeException("Exception in write " + ex);
-                    }
+                    final OutboundEvent.Builder builder = new OutboundEvent.Builder();
                 }
             }).start();
             ConnectionModule.addEndpoint(evOut, id);
@@ -164,7 +161,7 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         }
         
         
-        public static void writeEvents(final Long id){
+        public static void writeEvents(final String id){
             new Thread(new Runnable() {
                 public void run() {
                     try{
@@ -184,7 +181,7 @@ public class ConnectionModule extends AbstractFacade<Resources> {
             }).start();
         }
         
-        public static void sendMessage(final Long id, final String message){
+        public static void sendMessage(final String id, final String message){
                 final EventOutput e = ConnectionModule.getEndpoint(id);
                 if(e!=null){
                     new Thread(new Runnable() {
@@ -212,15 +209,15 @@ public class ConnectionModule extends AbstractFacade<Resources> {
     @Path("{id}/response")
     @POST
     @Consumes(MediaType.TEXT_PLAIN)
-    public void getResponse(@PathParam("id") Long id, String msgJson) throws IOException{
+    public void getResponse(@PathParam("id") String id, String msgJson) throws IOException{
         CommandMsg msg = (new Gson()).fromJson(msgJson, CommandMsg.class);
         synchronized(resToServiceLayers){
         resToServiceLayers.put(msg.id, (new ObjectMapper()).readTree(msg.objret));
         resToServiceLayers.notifyAll();}
     }
     
-    private static boolean SendData(Long id, String message){
-        final Long ident = id;
+    private static boolean SendData(String id, String message){
+        final String ident = id;
         final String m = message;
         Thread t = new Thread(new Runnable() {
             @Override
@@ -253,51 +250,50 @@ public class ConnectionModule extends AbstractFacade<Resources> {
     @Path("{id}/dataModel")
     @Consumes(MediaType.TEXT_PLAIN)
     //@Produces(MediaType.TEXT_PLAIN)
-    public void DataModel(@PathParam("id") Long id, String DM){
-        String result = DM;
+    public void DataModel(@PathParam("id") String id, String DM){
         //from xml to yang?
         Resources r = findR(id); 
         if(r!=null)
-            r.setDataModel(result);
+            r.setDataModel(DM);
+        dd.publish(id+".YANG", DM);
         //return result;
     }
     
-    @GET
+    @POST
     @Path("create")
-    @Produces(MediaType.APPLICATION_JSON)
-    public String create() {
+    @Consumes(MediaType.TEXT_PLAIN)
+    public void create(String id) {
         Resources entity = new Resources();
-        Long id = (new Random()).nextLong();
+        //Long id = (new Random()).nextLong();
         entity.setId(id);
         //create resources entrance
         res.put(id, entity);
         //SSE
-        //DDClient
-        if(!DDClients.containsKey(id)){
-            //testDD c = new testDD("tcp://127.0.0.1:5555", "/home/lara/GIT/DoubleDecker/keys/a-keys.json", id.toString(), "connMod");
-            //DDClients.put(id, c);
-            //public the id in the "all topic"
-            //c.publish("all", id.toString());
-        }
-        return entity.getId().toString();
+        
+        return;
     }
     
     public static void someConfiguration(String id, String msg){
-        if(SSEClients.containsKey(Long.parseLong(id))){
-            System.out.println("Traduzione corretta da DDClient a SSEClient per " + id);
-            SendData(Long.parseLong(id), msg);
+        if(SSEClients.containsKey(id)){
+            SendData(id, msg);
         }
     }
     
     
     @POST
     @Path("{id}/change")
-    @Consumes(MediaType.TEXT_PLAIN)
-    public void somethingChanged(@PathParam("id") Long id, String m){
-        if(DDClients.containsKey(id)){
-            testDD c = DDClients.get(id);
-            c.publish(id.toString(), m);
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void somethingChanged(@PathParam("id") String id, String m){
+        events msg = ((new Gson()).fromJson(m, events.class));
+        String topic = id+"/"+msg.var.replaceAll(Pattern.quote("."), "/");
+        if(msg.obj instanceof Number){
+            msg.obj = ((Number)msg.obj).toString();
         }
+        m = (msg.act==action.REMOVED)?(msg.act+" "+msg.var):(msg.act+" "+msg.var+" "+msg.obj);
+//        testDD d1 = new testDD("tcp://127.0.0.1:5555", "/home/lara/GIT/DoubleDecker/keys/a-keys.json", (new Long((new Random()).nextLong())).toString(), "connMod");
+        System.out.println("dd "+dd.status());
+        dd.publish(topic, m);
+        //d1.quit();
     }
     
     @Override
@@ -311,12 +307,13 @@ public class ConnectionModule extends AbstractFacade<Resources> {
     public void edit(@PathParam("id") Long id, Resources entity) {
         super.edit(entity);
     }*/
-    
+
+// don't use    
     @POST
     @Path("{id}/{x}/DM")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.TEXT_PLAIN)
-    public String Correspondence(@PathParam("id") final Long id, @PathParam("x") final String x, String c){
+    public String Correspondence(@PathParam("id") final String id, @PathParam("x") final String x, String c){
        Resources r = findR(id);
        if(r==null)
            Boolean.toString(false);
@@ -330,12 +327,13 @@ public class ConnectionModule extends AbstractFacade<Resources> {
        }).start();
        return Boolean.toString(result);
     }
-    
+ 
+//don't use
     @POST
     @Path("{id}/{x}/Value")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.TEXT_PLAIN)
-    public String Value(@PathParam("id") Long id, @PathParam("x") String x, String o){
+    public String Value(@PathParam("id") String id, @PathParam("x") String x, String o){
        Resources r = findR(id);
        if(r==null)
            return Boolean.toString(false);
@@ -346,32 +344,38 @@ public class ConnectionModule extends AbstractFacade<Resources> {
     
     @DELETE
     @Path("{id}")
-    public void remove(@PathParam("id") Long id) {
+    public void remove(@PathParam("id") String id) {
         Resources r = findR(id);
         if(r!=null)
             res.remove(r);
         SSEClients.remove(id);
-        DDClients.remove(id);
+        //DDClients.remove(id);
     }
 
-    @GET
-    @Path("{id}")
-    @Produces(MediaType.APPLICATION_XML)
-    public Resources find(@PathParam("id") Long id) {
-        sseResource.sendMessage(id, "ricevo id");
-        for(int i=0;i<res.size();i++){
-            Long idConf = res.get(i).getId();
-            if(idConf.longValue()==id.longValue())
-                return res.get(i);
-        }
-        return null;
-    }
+//    @GET
+//    @Path("{id}")
+//    @Produces(MediaType.APPLICATION_XML)
+//    public Resources find(@PathParam("id") String id) {
+//        sseResource.sendMessage(id, "ricevo id");
+//        for(int i=0;i<res.size();i++){
+//            Long idConf = res.get(i).getId();
+//            if(idConf.longValue()==id.longValue())
+//                return res.get(i);
+//        }
+//        return null;
+//    }
 
     @GET
     @Override
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     public List<Resources> findAll() {
         return new ArrayList(res.values());
+    }
+    
+    public static String getYang(String id){
+        if(res.containsKey(id))
+            return res.get(id).getDataModel();
+        return null;
     }
 
     @GET

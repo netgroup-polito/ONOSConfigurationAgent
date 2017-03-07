@@ -25,7 +25,7 @@ public class Resources implements Serializable {
     private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private String id;
     private HashMap<String, String> correspondence = new HashMap<String, String>();
     private HashMap<String, Object> values = new HashMap<String, Object>();
     private String dataModel;
@@ -55,11 +55,11 @@ public class Resources implements Serializable {
         this.dataModel = dataModel;
     }
     
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
