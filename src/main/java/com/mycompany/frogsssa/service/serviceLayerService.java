@@ -49,7 +49,7 @@ public class serviceLayerService {
         //if(obj!=null){
           //  return (new Gson()).toJson(obj);
         //}
-        var = var.replace("/", ".");
+        //var = var.replace("/", ".");
         JsonNode obj = ((new ConnectionModule()).getValue(id, var));
         if(obj==null)
             return Response.ok("Object not found").build();
@@ -71,14 +71,14 @@ public class serviceLayerService {
         //controllo validità variabile
         //ConnectionModule.someConfiguration(id.toString(), "config " + var + " " + Json);
         System.out.println("It wants to set the variable " + var);
-        var = var.replace("/", ".");
+        //var = var.replace("/", ".");
         ConnectionModule.configVar(id, var, Json);
     }
     
     @Path("{varId: .+}")
     @DELETE
     public void deleteVar(@PathParam("AppId") String id, @PathParam("varId") String var){
-        var = var.replace("/", ".");
+        //var = var.replace("/", ".");
         ConnectionModule.deleteVar(id, var);
     }
 }
