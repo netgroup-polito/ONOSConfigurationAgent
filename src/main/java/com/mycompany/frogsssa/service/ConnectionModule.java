@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
  */
 @Stateless
 @Path("ConnectionModule")
-public class ConnectionModule extends AbstractFacade<Resources> {
+public class ConnectionModule{
 
     @PersistenceContext(unitName = "com.mycompany_frogsssa_war_1.0-SNAPSHOTPU")
     private EntityManager em;
@@ -65,7 +65,6 @@ public class ConnectionModule extends AbstractFacade<Resources> {
     }
     
     public ConnectionModule() {
-        super(Resources.class);
 //        final ResourceConfig config = new ResourceConfig();
 //        config.register(SseFeature.class);
     }
@@ -296,10 +295,6 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         //d1.quit();
     }
     
-    @Override
-    public void create(Resources entity){
-        super.create(entity);
-    }
 
     /*@PUT
     @Path("{id}")
@@ -365,12 +360,6 @@ public class ConnectionModule extends AbstractFacade<Resources> {
 //        return null;
 //    }
 
-    @GET
-    @Override
-    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    public List<Resources> findAll() {
-        return new ArrayList(res.values());
-    }
     
     public static String getYang(String id){
         if(res.containsKey(id))
@@ -378,26 +367,6 @@ public class ConnectionModule extends AbstractFacade<Resources> {
         return null;
     }
 
-    @GET
-    @Path("{from}/{to}")
-    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    public List<Resources> findRange(@PathParam("from") Integer from, @PathParam("to") Integer to) {
-        return super.findRange(new int[]{from, to});
-    }
-
-    @GET
-    @Path("count")
-    @Produces(MediaType.TEXT_PLAIN)
-    public String countREST() {
-        return String.valueOf(super.count());
-    }
-
-    @Override
-    protected EntityManager getEntityManager() {
-        return em;
-    }
-    
-    
     //methods to be accessed by serviceLayerService
     public Resources getRes(Long id){
         if(res.containsKey(id))
