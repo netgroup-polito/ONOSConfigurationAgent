@@ -29,6 +29,7 @@ public class testDD implements Observer, DDEvents {
 
     public testDD(String dealer, String keyfile, String name, String customer) {
         try {
+            System.out.println("---PATH---"+keyfile);
             this.name = name;
             client = new DDClient(dealer, name, true, this, keyfile);
         } catch (IOException e) {

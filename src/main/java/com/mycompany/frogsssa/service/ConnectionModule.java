@@ -36,6 +36,9 @@ import org.glassfish.jersey.media.sse.OutboundEvent;
 import org.glassfish.jersey.media.sse.SseFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import com.mycompany.frogsssa.testDD;
+import java.io.File;
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
@@ -53,7 +56,7 @@ public class ConnectionModule{
     private static HashMap<String, Resources> res = new HashMap<String, Resources>();
     private static HashMap<String, EventOutput> SSEClients = new HashMap<>();
     private static HashMap<String, testDD> DDClients = new HashMap<>();
-    private final static testDD dd = new testDD("tcp://127.0.0.1:5555", "/home/lara/GIT/DoubleDecker/keys/a-keys.json", (new Long((new Random()).nextLong())).toString(), "connMod");
+    private static testDD dd = new testDD("tcp://127.0.0.1:5555", ConnectionModule.class.getClassLoader().getResource("files/keys.json").getPath(), (new Long((new Random()).nextLong())).toString(), "connMod");
     private static sseResource conn = new sseResource();
     private static HashMap<Long, JsonNode> resToServiceLayers = new HashMap();
 
@@ -65,6 +68,8 @@ public class ConnectionModule{
     }
     
     public ConnectionModule() {
+        
+
 //        final ResourceConfig config = new ResourceConfig();
 //        config.register(SseFeature.class);
     }
