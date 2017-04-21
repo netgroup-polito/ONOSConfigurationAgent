@@ -43,6 +43,7 @@
                     <artifactId>asm-all-repackaged</artifactId>
                 </exclusion>
             </exclusions>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>info.macias</groupId>
