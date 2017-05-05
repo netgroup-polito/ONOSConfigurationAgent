@@ -53,7 +53,7 @@ public class ConnectionModule{
 
     @PersistenceContext(unitName = "com.mycompany_frogsssa_war_1.0-SNAPSHOTPU")
     private EntityManager em;
-    private static HashMap<String, Resources> res = new HashMap<String, Resources>();
+    private static HashMap<String, String> resDM = new HashMap<String, String>();
     private static HashMap<String, EventOutput> SSEClients = new HashMap<>();
     private static HashMap<String, testDD> DDClients = new HashMap<>();
     private static testDD dd = new testDD("tcp://127.0.0.1:5555", ConnectionModule.class.getClassLoader().getResource("files/keys.json").getPath(), (new Long((new Random()).nextLong())).toString(), "connMod");
@@ -92,12 +92,12 @@ public class ConnectionModule{
 //    public static void messageReceived(Long id, String m){
 //        System.out.println("Message received from " + id + " : " + m);
 //    }
-    
-    private Resources findR(String id){
-        if(res.containsKey(id))
-            return res.get(id);
-        return null;
-    }
+//    
+//    private Resources findR(String id){
+//        if(resDM.containsKey(id))
+//            return resDM.get(id);
+//        return null;
+//    }
     
     public JsonNode getValue(String AppId, String var){
         if(!SSEClients.containsKey(AppId))
@@ -143,12 +143,12 @@ public class ConnectionModule{
     public static class sseResource{
         final EventOutput evOut = new EventOutput();
         
-        private static Resources findR(String id){
-        for(int i = 0; i < res.size(); i++)
-            if(id==res.get(i).getId())
-                return res.get(i);
-        return null;
-    }
+//        private static Resources findR(String id){
+//        for(int i = 0; i < res.size(); i++)
+//            if(id==res.get(i).getId())
+//                return res.get(i);
+//        return null;
+//    }
         
         @GET
         @Produces(SseFeature.SERVER_SENT_EVENTS)
@@ -256,9 +256,10 @@ public class ConnectionModule{
     //@Produces(MediaType.TEXT_PLAIN)
     public void DataModel(@PathParam("id") String id, String DM){
         //from xml to yang?
-        Resources r = findR(id); 
-        if(r!=null)
-            r.setDataModel(DM);
+        if(!resDM.containsKey(id))
+            resDM.put(id, DM);
+        else
+            resDM.replace(id, DM);
         dd.publish(id+".YANG", DM);
         //return result;
     }
@@ -267,11 +268,11 @@ public class ConnectionModule{
     @Path("create")
     @Consumes(MediaType.TEXT_PLAIN)
     public void create(String id) {
-        Resources entity = new Resources();
-        //Long id = (new Random()).nextLong();
-        entity.setId(id);
-        //create resources entrance
-        res.put(id, entity);
+//        Resources entity = new Resources();
+//        //Long id = (new Random()).nextLong();
+//        entity.setId(id);
+//        //create resources entrance
+        resDM.put(id, null);
         //SSE
         
         return;
@@ -308,46 +309,45 @@ public class ConnectionModule{
         super.edit(entity);
     }*/
 
-// don't use    
-    @POST
-    @Path("{id}/{x}/DM")
-    @Consumes(MediaType.TEXT_PLAIN)
-    @Produces(MediaType.TEXT_PLAIN)
-    public String Correspondence(@PathParam("id") final String id, @PathParam("x") final String x, String c){
-       Resources r = findR(id);
-       if(r==null)
-           Boolean.toString(false);
-       boolean result = r.setCorrespondence(x,c);
-       //sseResource.sendMessage(id, "Modified DM of " + id);
-       new Thread(new Runnable() {
-           @Override
-           public void run() {
-               SendData(id, "corrispondenza per " + x + " settata");
-           }
-       }).start();
-       return Boolean.toString(result);
-    }
+//// don't use    
+//    @POST
+//    @Path("{id}/{x}/DM")
+//    @Consumes(MediaType.TEXT_PLAIN)
+//    @Produces(MediaType.TEXT_PLAIN)
+//    public String Correspondence(@PathParam("id") final String id, @PathParam("x") final String x, String c){
+//       Resources r = findR(id);
+//       if(r==null)
+//           Boolean.toString(false);
+//       boolean result = r.setCorrespondence(x,c);
+//       //sseResource.sendMessage(id, "Modified DM of " + id);
+//       new Thread(new Runnable() {
+//           @Override
+//           public void run() {
+//               SendData(id, "corrispondenza per " + x + " settata");
+//           }
+//       }).start();
+//       return Boolean.toString(result);
+//    }
  
-//don't use
-    @POST
-    @Path("{id}/{x}/Value")
-    @Consumes(MediaType.TEXT_PLAIN)
-    @Produces(MediaType.TEXT_PLAIN)
-    public String Value(@PathParam("id") String id, @PathParam("x") String x, String o){
-       Resources r = findR(id);
-       if(r==null)
-           return Boolean.toString(false);
-       //from string to object
-       return Boolean.toString(r.setValue(x,o));
-    }
+////don't use
+//    @POST
+//    @Path("{id}/{x}/Value")
+//    @Consumes(MediaType.TEXT_PLAIN)
+//    @Produces(MediaType.TEXT_PLAIN)
+//    public String Value(@PathParam("id") String id, @PathParam("x") String x, String o){
+//       Resources r = findR(id);
+//       if(r==null)
+//           return Boolean.toString(false);
+//       //from string to object
+//       return Boolean.toString(r.setValue(x,o));
+//    }
     
     
     @DELETE
     @Path("{id}")
     public void remove(@PathParam("id") String id) {
-        Resources r = findR(id);
-        if(r!=null)
-            res.remove(r);
+        if(resDM.containsKey(id))
+            resDM.remove(id);
         SSEClients.remove(id);
         //DDClients.remove(id);
     }
@@ -367,24 +367,24 @@ public class ConnectionModule{
 
     
     public static String getYang(String id){
-        if(res.containsKey(id))
-            return res.get(id).getDataModel();
+        if(resDM.containsKey(id))
+            return resDM.get(id);
         return null;
     }
 
-    //methods to be accessed by serviceLayerService
-    public Resources getRes(Long id){
-        if(res.containsKey(id))
-            return res.get(id);
-        else return null;
-    }
-    
-    public static Object getResVariable(Long id, String var){
-        if(res.containsKey(id)){
-            Resources r = res.get(id);
-            return r.getValue(var);
-        }
-        return null;
-    }
+//    //methods to be accessed by serviceLayerService
+//    public Resources getRes(Long id){
+//        if(res.containsKey(id))
+//            return res.get(id);
+//        else return null;
+//    }
+//    
+//    public static Object getResVariable(Long id, String var){
+//        if(res.containsKey(id)){
+//            Resources r = res.get(id);
+//            return r.getValue(var);
+//        }
+//        return null;
+//    }
 }
 
