@@ -11,8 +11,9 @@ This module is a Web Service that is in charge of mediate between one or more se
 You are now able to reach the web service through the APIs, and orchestrate each Application is attached to it.
 
 APIs are:
+- GET /{AppId}/DM
 - GET /{AppId}/{varId}
 - POST /{AppId}/{varId}
 - DELETE /{AppId}/{varId}
 
-where the {varId} is the path from the root of the DataModel to the variable you want to indicate (e.g. /rootVar/containerVar/listVar[index]/leafVar)
+where DM is the Data Model, and the {varId} is the path from the root of the DataModel to the variable you want to indicate (e.g. /rootVar/containerVar/listVar[index]/leafVar)
