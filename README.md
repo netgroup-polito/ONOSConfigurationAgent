@@ -8,7 +8,7 @@ This module is a Web Service that is in charge of mediate between one or more se
 
 No dependency should be installed.
 
-####Installing
+### Installing
 
 If you want, you can use the DoubleDecker service, in this case you need to have a DoubleDecker broker, and put the tenant keys in the keys.json file (that you can find in the package resources/files). You should also change eventually the address where to find the ddbroker (default: localhost:5555) in the file ConnectionModule.java (line 59).
 
