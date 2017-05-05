@@ -260,6 +260,7 @@ public class ConnectionModule{
             resDM.put(id, DM);
         else
             resDM.replace(id, DM);
+        System.out.println("Setted DM for "+id+" "+DM);
         dd.publish(id+".YANG", DM);
         //return result;
     }
