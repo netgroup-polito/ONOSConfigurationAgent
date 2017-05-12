@@ -68,8 +68,6 @@ public class ConnectionModule{
     }
     
     public ConnectionModule() {
-        
-
 //        final ResourceConfig config = new ResourceConfig();
 //        config.register(SseFeature.class);
     }
