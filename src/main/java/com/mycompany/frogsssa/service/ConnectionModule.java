@@ -56,11 +56,11 @@ public class ConnectionModule{
     private static HashMap<String, String> resDM = new HashMap<String, String>();
     private static HashMap<String, EventOutput> SSEClients = new HashMap<>();
     private static HashMap<String, testDD> DDClients = new HashMap<>();
-    private static testDD dd = new testDD("tcp://127.0.0.1:5555", ConnectionModule.class.getClassLoader().getResource("files/keys.json").getPath(), (new Long((new Random()).nextLong())).toString(), "connMod");
+    private static testDD dd = new testDD("tcp://127.0.0.1:5555", ConnectionModule.class.getClassLoader().getResource("files/keys.json").getPath(), "ConnectionModule"+(new Long((new Random()).nextLong())).toString(), "connMod");
     private static sseResource conn = new sseResource();
     private static HashMap<Long, JsonNode> resToServiceLayers = new HashMap();
 
-    public enum action{ADDED, UPDATED, REMOVED, NOCHANGES};
+    public enum action{ADDED, UPDATED, REMOVED, NOCHANGES, PERIODIC};
     public class events{
         public action act;
         public Object obj;
