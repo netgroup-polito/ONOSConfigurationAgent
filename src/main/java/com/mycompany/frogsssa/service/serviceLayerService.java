@@ -51,7 +51,8 @@ public class serviceLayerService {
         //}
         //var = var.replace("/", ".");
         JsonNode obj = ((new ConnectionModule()).getValue(id, var));
-        if(obj==null || obj.toString().equals("null"))
+        System.out.println(obj);
+        if(obj==null || obj.asText().equals("null"))
             return Response.status(Response.Status.NOT_FOUND).build();
         return Response.ok(obj.toString()).build();
     }
