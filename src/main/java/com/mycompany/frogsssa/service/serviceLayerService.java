@@ -51,28 +51,57 @@ public class serviceLayerService {
         //}
         //var = var.replace("/", ".");
         JsonNode obj = ((new ConnectionModule()).getValue(id, var));
-        if(obj==null)
-            return Response.ok("Object not found").build();
+        if(obj==null || obj.equals("null"))
+            return Response.status(Response.Status.NOT_FOUND).build();
         return Response.ok(obj.toString()).build();
     }
     
     @GET
     @Path("DM")
     @Produces(MediaType.TEXT_PLAIN)
-    public String getYang(@PathParam("AppId") String id){
-        return ConnectionModule.getYang(id);
+    public Response getYang(@PathParam("AppId") String id){
+        String yang = ConnectionModule.getYang(id);
+        if(yang==null)
+            return Response.status(Response.Status.NOT_FOUND).build();
+        return Response.ok(yang).build();
     }
     
     //configuration
     @Path("{varId: .+}")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    public void setConf(@PathParam("AppId") String id, @PathParam("varId") String var, String Json){
+    public Response setConf(@PathParam("AppId") String id, @PathParam("varId") String var, String Json){
+        //0 ok
+        //1 variable not setted - error
+        //2 variable not found - error
+        //3 internal server error
+        //4 app not found
         //controllo validità variabile
         //ConnectionModule.someConfiguration(id.toString(), "config " + var + " " + Json);
         System.out.println("It wants to set the variable " + var);
         //var = var.replace("/", ".");
-        ConnectionModule.configVar(id, var, Json);
+        Integer configured = ConnectionModule.configVar(id, var, Json);
+        Response res;
+        switch(configured){
+            case 0:
+                res = Response.ok().build();
+                break;
+            case 1:
+                res = Response.status(Response.Status.BAD_REQUEST).build();
+                break;
+            case 2:
+                res = Response.status(Response.Status.NOT_FOUND).build();
+                break;
+            case 3:
+                res = Response.serverError().build();
+                break;
+            case 4:
+                res = Response.status(Response.Status.NOT_FOUND).build();
+                break;
+            default:
+                res = Response.serverError().build();
+        }
+        return res;
     }
     
     @Path("{varId: .+}")
