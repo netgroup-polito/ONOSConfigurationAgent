@@ -107,8 +107,29 @@ public class serviceLayerService {
     
     @Path("{varId: .+}")
     @DELETE
-    public void deleteVar(@PathParam("AppId") String id, @PathParam("varId") String var){
+    public Response deleteVar(@PathParam("AppId") String id, @PathParam("varId") String var){
         //var = var.replace("/", ".");
-        ConnectionModule.deleteVar(id, var);
+        Integer deleted = ConnectionModule.deleteVar(id, var);
+                Response res;
+        switch(deleted){
+            case 0:
+                res = Response.ok().build();
+                break;
+            case 1:
+                res = Response.status(Response.Status.BAD_REQUEST).build();
+                break;
+            case 2:
+                res = Response.status(Response.Status.NOT_FOUND).build();
+                break;
+            case 3:
+                res = Response.serverError().build();
+                break;
+            case 4:
+                res = Response.status(Response.Status.NOT_FOUND).build();
+                break;
+            default:
+                res = Response.serverError().build();
+        }
+        return res;
     }
 }
