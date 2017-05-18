@@ -141,13 +141,26 @@ public class ConnectionModule{
         return 4;
     }
     
-    public static void deleteVar(String id, String var){
+    public static int deleteVar(String id, String var){
         if(SSEClients.containsKey(id)){
             CommandMsg msg = new CommandMsg();
+            Long v = (new Random()).nextLong();
+            msg.id = v;
             msg.act = command.DELETE;
             msg.var = var;
             SendData(id, (new Gson()).toJson(msg));
+            synchronized(resToServiceLayers){
+            while(!resToServiceLayers.containsKey(v))
+                try{resToServiceLayers.wait();} catch (InterruptedException ex) {
+                    Logger.getLogger(ConnectionModule.class.getName()).log(Level.SEVERE, null, ex);
+                    return 3;
+                }
+            }
+            Integer ret = resToServiceLayers.get(v).asInt();
+            resToServiceLayers.remove(v);
+            return ret;
         }
+        return 4;
     }
     
     @Path("events/{id}")
