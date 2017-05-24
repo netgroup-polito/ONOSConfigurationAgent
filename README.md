@@ -26,7 +26,7 @@ You just have to deploy the web service: I used the Glassfish server 4.1 server 
 
 ```
 cd glassfish/javadb
-bin/startNetwork
+bin/startNetworkServer
 ```
 and from another CLI
 ```
