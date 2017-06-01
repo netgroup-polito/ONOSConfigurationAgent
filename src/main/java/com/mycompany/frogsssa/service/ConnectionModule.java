@@ -334,7 +334,7 @@ public class ConnectionModule{
         if(msg.obj instanceof Number){
             msg.obj = ((Number)msg.obj).toString();
         }
-        m = (msg.act==action.DELETED)?("{\"events\":"+msg.act+",\n\"timestamp\":"+msg.timestamp):("{\"events\":"+msg.act+",\n\"timestamp\":"+msg.timestamp+",\n\"data\":"+msg.obj);
+        m = (msg.act==action.DELETED)?("{\"event\":"+msg.act+",\n\"timestamp\":"+msg.timestamp+"}"):("{\"event\":"+msg.act+",\n\"timestamp\":"+msg.timestamp+",\n\"data\":"+msg.obj+"}");
 //        testDD d1 = new testDD("tcp://127.0.0.1:5555", "/home/lara/GIT/DoubleDecker/keys/a-keys.json", (new Long((new Random()).nextLong())).toString(), "connMod");
         System.out.println("dd "+dd.status());
         dd.publish(topic, m);
