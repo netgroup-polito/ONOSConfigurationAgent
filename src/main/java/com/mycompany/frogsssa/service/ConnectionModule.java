@@ -37,10 +37,16 @@ import org.glassfish.jersey.media.sse.SseFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import com.mycompany.frogsssa.testDD;
 import java.io.File;
+import java.net.InetAddress;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.regex.Pattern;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
 
 
 /**
@@ -60,11 +66,12 @@ public class ConnectionModule{
     private static sseResource conn = new sseResource();
     private static HashMap<Long, JsonNode> resToServiceLayers = new HashMap();
 
-    public enum action{ADDED, UPDATED, REMOVED, NOCHANGES, PERIODIC};
-    public class events{
+    public enum action{ADDED, UPDATED, DELETED, NOCHANGES, PERIODIC};
+    public class NotifyMsg{
         public action act;
         public Object obj;
         public String var;
+        public Date timestamp;
     }
     
     public ConnectionModule() {
@@ -285,22 +292,30 @@ public class ConnectionModule{
         else
             resDM.replace(id, DM);
         System.out.println("Setted DM for "+id+" "+DM);
-        dd.publish(id, DM);
+        dd.publish(id+"/yang", DM);
         //return result;
     }
     
     @POST
     @Path("create")
     @Consumes(MediaType.TEXT_PLAIN)
-    public void create(String id) {
+    public void create(@Context UriInfo uriInfo, String id) {
 //        Resources entity = new Resources();
 //        //Long id = (new Random()).nextLong();
 //        entity.setId(id);
 //        //create resources entrance
         resDM.put(id, null);
-        //SSE
-        
+        URI ad = uriInfo.getBaseUri();
+        dd.publish(id+"/restServer", ad.toString());     
+        //SSE      
         return;
+    }
+    
+    @GET
+    @Path("address")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String address(@Context UriInfo uriInfo){
+        return uriInfo.getBaseUri().toString();
     }
     
     public static void someConfiguration(String id, String msg){
@@ -314,12 +329,12 @@ public class ConnectionModule{
     @Path("{id}/change")
     @Consumes(MediaType.APPLICATION_JSON)
     public void somethingChanged(@PathParam("id") String id, String m){
-        events msg = ((new Gson()).fromJson(m, events.class));
+        NotifyMsg msg = ((new Gson()).fromJson(m, NotifyMsg.class));
         String topic = id+"/"+msg.var.replaceAll(Pattern.quote("."), "/");
         if(msg.obj instanceof Number){
             msg.obj = ((Number)msg.obj).toString();
         }
-        m = (msg.act==action.REMOVED)?(msg.act+" "+msg.var):(msg.act+" "+msg.var+" "+msg.obj);
+        m = (msg.act==action.DELETED)?("{\"events\":"+msg.act+",\n\"timestamp\":"+msg.timestamp):("{\"events\":"+msg.act+",\n\"timestamp\":"+msg.timestamp+",\n\"data\":"+msg.obj);
 //        testDD d1 = new testDD("tcp://127.0.0.1:5555", "/home/lara/GIT/DoubleDecker/keys/a-keys.json", (new Long((new Random()).nextLong())).toString(), "connMod");
         System.out.println("dd "+dd.status());
         dd.publish(topic, m);

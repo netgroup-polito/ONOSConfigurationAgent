@@ -113,7 +113,7 @@ public class serviceLayerService {
                 Response res;
         switch(deleted){
             case 0:
-                res = Response.ok().build();
+                res = Response.noContent().build();
                 break;
             case 1:
                 res = Response.status(Response.Status.BAD_REQUEST).build();
