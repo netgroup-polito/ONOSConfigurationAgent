@@ -126,7 +126,9 @@ public class ConnectionModule{
     }
     
     public static int configVar(String id, String var, String json){
+	System.out.println("Dentro config Var: id: " + id + "...");
         if(SSEClients.containsKey(id)){
+	    System.out.println("Ho trovato la key!");
             CommandMsg msg = new CommandMsg();
             msg.act=command.CONFIG;
             msg.var=var;
@@ -170,7 +172,7 @@ public class ConnectionModule{
         return 4;
     }
     
-    @Path("events/{id}")
+    @Path("events/{tenantId}/{graphId}/{vnfId}")
     public static class sseResource{
         final EventOutput evOut = new EventOutput();
         
@@ -183,7 +185,8 @@ public class ConnectionModule{
         
         @GET
         @Produces(SseFeature.SERVER_SENT_EVENTS)
-        public EventOutput getServerSentEvents(@PathParam("id") final String id){
+        public EventOutput getServerSentEvents(@PathParam("tenantId") final String tenantId, @PathParam("graphId") final String graphId, @PathParam("vnfId") final String vnfId){
+	    String id = tenantId + '/' + graphId + '/' + vnfId;
             new Thread(new Runnable() {
                 public void run() {
                     final OutboundEvent.Builder builder = new OutboundEvent.Builder();

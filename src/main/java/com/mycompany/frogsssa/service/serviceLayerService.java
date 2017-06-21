@@ -27,7 +27,7 @@ import org.glassfish.jersey.server.ResourceConfig;
  *
  * @author lara
  */
-@Path("{AppId}")
+@Path("{tenantId}/{graphId}/{vnfId}")
 public class serviceLayerService {
 
     @Context
@@ -43,13 +43,14 @@ public class serviceLayerService {
     @Path("{varId : .+}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getResources(@PathParam("AppId") String id, @PathParam("varId") String var){
+    public Response getResources(@PathParam("tenantId") String tenantId, @PathParam("graphId") String graphId, @PathParam("vnfId") String vnfId, @PathParam("varId") String var){
         //String res = new String("asked for this variable " + var);
         //Object obj = ConnectionModule.getResVariable(id, var);
         //if(obj!=null){
           //  return (new Gson()).toJson(obj);
         //}
         //var = var.replace("/", ".");
+	String id = tenantId + '/' + graphId + '/' + vnfId;
         JsonNode obj = ((new ConnectionModule()).getValue(id, var));
         System.out.println(obj);
         if(obj==null)
@@ -62,7 +63,8 @@ public class serviceLayerService {
     @GET
     @Path("DM")
     @Produces(MediaType.TEXT_PLAIN)
-    public Response getYang(@PathParam("AppId") String id){
+    public Response getYang(@PathParam("tenantId") String tenantId, @PathParam("graphId") String graphId, @PathParam("vnfId") String vnfId){
+	String id = tenantId + '/' + graphId + '/' + vnfId;
         String yang = ConnectionModule.getYang(id);
         if(yang==null)
             return Response.status(Response.Status.NOT_FOUND).build();
@@ -73,7 +75,7 @@ public class serviceLayerService {
     @Path("{varId: .+}")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response setConf(@PathParam("AppId") String id, @PathParam("varId") String var, String Json){
+    public Response setConf(@PathParam("tenantId") String tenantId, @PathParam("graphId") String graphId, @PathParam("vnfId") String vnfId, @PathParam("varId") String var, String Json){
         //0 ok
         //1 variable not setted - error
         //2 variable not found - error
@@ -81,6 +83,8 @@ public class serviceLayerService {
         //4 app not found
         //controllo validità variabile
         //ConnectionModule.someConfiguration(id.toString(), "config " + var + " " + Json);
+	String id = tenantId + '/' + graphId + '/' + vnfId;
+	System.out.println("Id: " + id);
         System.out.println("It wants to set the variable " + var);
         //var = var.replace("/", ".");
         Integer configured = ConnectionModule.configVar(id, var, Json);
@@ -109,8 +113,9 @@ public class serviceLayerService {
     
     @Path("{varId: .+}")
     @DELETE
-    public Response deleteVar(@PathParam("AppId") String id, @PathParam("varId") String var){
+    public Response deleteVar(@PathParam("tenantId") String tenantId, @PathParam("graphId") String graphId, @PathParam("vnfId") String vnfId, @PathParam("varId") String var){
         //var = var.replace("/", ".");
+	String id = tenantId + '/' + graphId + '/' + vnfId;
         Integer deleted = ConnectionModule.deleteVar(id, var);
                 Response res;
         switch(deleted){
