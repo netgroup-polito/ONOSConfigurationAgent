@@ -244,10 +244,10 @@ public class ConnectionModule{
         
     }
     
-    @Path("{id}/response")
+    @Path("{tenantId}/{graphId}/{vnfId}/response")
     @POST
     @Consumes(MediaType.TEXT_PLAIN)
-    public void getResponse(@PathParam("id") String id, String msgJson) throws IOException{
+    public void getResponse(@PathParam("tenantId") String tenantId, @PathParam("graphId") String graphId, @PathParam("vnfId") String vnfId, String msgJson) throws IOException{
         CommandMsg msg = (new Gson()).fromJson(msgJson, CommandMsg.class);
         synchronized(resToServiceLayers){
         resToServiceLayers.put(msg.id, (new ObjectMapper()).readTree(msg.objret));
@@ -283,12 +283,12 @@ public class ConnectionModule{
             return false;
         return true;
     }
-    
+
     @POST
-    @Path("{id}/dataModel")
+    @Path("{tenantId}/{graphId}/{vnfId}/dataModel")
     @Consumes(MediaType.TEXT_PLAIN)
     //@Produces(MediaType.TEXT_PLAIN)
-    public void DataModel(@PathParam("id") String id, String DM){
+    public void DataModel(@PathParam("tenantId") String tenantId, @PathParam("graphId") String graphId, @PathParam("vnfId") String vnfId, String DM){
         //from xml to yang?
         if(!resDM.containsKey(id))
             resDM.put(id, DM);
@@ -329,9 +329,9 @@ public class ConnectionModule{
     
     
     @POST
-    @Path("{id}/change")
+    @Path("{tenantId}/{graphId}/{vnfId}/change")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void somethingChanged(@PathParam("id") String id, String m){
+    public void somethingChanged(@PathParam("tenantId") String tenantId, @PathParam("graphId") String graphId, @PathParam("vnfId") String vnfId, String m){
         NotifyMsg msg = ((new Gson()).fromJson(m, NotifyMsg.class));
         String topic = id+"/"+msg.var.replaceAll(Pattern.quote("."), "/");
         if(msg.obj instanceof Number){
@@ -384,11 +384,11 @@ public class ConnectionModule{
 //       //from string to object
 //       return Boolean.toString(r.setValue(x,o));
 //    }
-    
-    
+
+
     @DELETE
-    @Path("{id}")
-    public void remove(@PathParam("id") String id) {
+    @Path("{tenantId}/{graphId}/{vnfId}")
+    public void remove(@PathParam("tenantId") String tenantId, @PathParam("graphId") String graphId, @PathParam("vnfId") String vnfId) {
         if(resDM.containsKey(id))
             resDM.remove(id);
         SSEClients.remove(id);
