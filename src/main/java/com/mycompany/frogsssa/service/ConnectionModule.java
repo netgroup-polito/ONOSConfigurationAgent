@@ -294,7 +294,7 @@ public class ConnectionModule{
         else
             resDM.replace(id, DM);
         System.out.println("Setted DM for "+id+" "+DM);
-        dd.publish(id+"/yang", DM);
+        dd.publish("public." + id+"/yang", DM);
         //return result;
     }
     
@@ -308,7 +308,8 @@ public class ConnectionModule{
 //        //create resources entrance
         resDM.put(id, null);
         URI ad = uriInfo.getBaseUri();
-        dd.publish(id+"/restServer", ad.toString());     
+        dd.publish("public." + id + "vnf_registration", ad.toString());
+        dd.publish("public." + id + "/restServer", ad.toString());
         //SSE      
         return;
     }
