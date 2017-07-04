@@ -308,7 +308,11 @@ public class ConnectionModule{
 //        //create resources entrance
         resDM.put(id, null);
         URI ad = uriInfo.getBaseUri();
-        dd.publish("public." + id + "vnf_registration", ad.toString());
+        String[] ids = id.split("/");
+        String registration_data = "tenant-id:" + ids[0] + "\n" +
+                                   "graph-id:" + ids[1] + "\n" +
+                                   "vnf-id:" + ids[2];
+        dd.publish("public." + "vnf_registration", registration_data);
         dd.publish("public." + id + "/restServer", ad.toString());
         //SSE      
         return;
