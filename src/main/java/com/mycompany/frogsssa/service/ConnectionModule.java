@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Resource;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -47,6 +48,7 @@ import java.util.Date;
 import java.util.regex.Pattern;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.ws.WebServiceContext;
 
 
 /**
@@ -56,8 +58,9 @@ import javax.ws.rs.core.UriInfo;
 @Stateless
 @Path("ConnectionModule")
 public class ConnectionModule{
-
     @PersistenceContext(unitName = "com.mycompany_frogsssa_war_1.0-SNAPSHOTPU")
+    @Resource public static WebServiceContext wsCtxt;
+
     private EntityManager em;
     private static HashMap<String, String> resDM = new HashMap<String, String>();
     private static HashMap<String, EventOutput> SSEClients = new HashMap<>();
@@ -313,7 +316,7 @@ public class ConnectionModule{
                                    "graph-id:" + ids[1] + "\n" +
                                    "vnf-id:" + ids[2];
         dd.publish("public." + "vnf_registration", registration_data);
-        dd.publish("public." + id + "/restServer", ad.toString());
+        //dd.publish("public." + id + "/restServer", ad.toString());
         //SSE      
         return;
     }

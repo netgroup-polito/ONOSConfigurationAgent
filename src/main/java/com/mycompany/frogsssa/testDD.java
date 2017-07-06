@@ -16,7 +16,11 @@ import asg.cliche.ShellFactory;
 import com.mycompany.frogsssa.service.ConnectionModule;
 import org.apache.commons.cli.*;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.xml.ws.handler.MessageContext;
 import java.io.IOException;
+import java.net.URI;
+import java.sql.Connection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Observable;
@@ -209,7 +213,25 @@ public class testDD implements Observer, DDEvents {
 
     @Override
     public void data(String source, byte[] data) {
-        System.out.println("DATA src: " + source + " d: " + new String(data));
+        String msg = new String(data);
+        System.out.println("DATA src: " + source + " d: " + msg);
+        if(msg.substring(0, 10).equals("REGISTERED")) {
+            if(!msg.contains(":")) {
+                System.out.println("Wrong response format from the configuration architecture\n" +
+                                    "Expected REGISTERED:<ID app> instead of " + msg);
+            }
+            String id = msg.split(":")[1];
+            //URI ad = uriInfo.getBaseUri();
+            MessageContext msgCtxt = ConnectionModule.wsCtxt.getMessageContext();
+            HttpServletRequest request =
+                    (HttpServletRequest)msgCtxt.get(MessageContext.SERVLET_REQUEST);
+
+            String hostName = request.getServerName();
+            int port = request.getServerPort();
+            String contextPath = request.getContextPath();
+            String uri = "http://" + hostName + ":" + port + contextPath;
+            this.publish("public." + id + "/restServer", uri);
+        }
         ConnectionModule.someConfiguration(this.name, new String(data));
     }
 
