@@ -47,4 +47,4 @@ APIs are:
 
 where DM is the Data Model, and the {varId} is the path from the root of the DataModel to the variable you want to indicate (e.g. /rootVar/containerVar/listVar[index]/leafVar).
 
-Take care that the base uri will be http://ipaddress:port/frogsssa-1.0-SNAPSHOT/webresources and not just http://ipaddress:port.
+Take care that the base uri will be http://ipaddress:port/ConnectionModule-1.0-SNAPSHOT/webresources and not just http://ipaddress:port.
